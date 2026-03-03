@@ -9,6 +9,7 @@ const tasksContainer = document.getElementById("tasks-container");
 const titleInput = document.getElementById("title-input");
 const dateInput = document.getElementById("date-input");
 const descriptionInput = document.getElementById("description-input");
+let currentFilter = "all";
 
 const taskData = JSON.parse(localStorage.getItem("data")) || [];
 let currentTask = {};
@@ -49,22 +50,32 @@ const addOrUpdateTask = () => {
 const updateTaskContainer = () => {
   tasksContainer.innerHTML = "";
 
-taskData.forEach(({ id, title, date, description, completed }) => {
-  tasksContainer.innerHTML += `
-    <div class="task ${completed ? "completed" : ""}" id="${id}">
-      <input 
-        type="checkbox"
-        ${completed ? "checked" : ""}
-        onchange="toggleComplete(this)"
-      />
-      <p><strong>Title:</strong> ${title}</p>
-      <p><strong>Date:</strong> ${date}</p>
-      <p><strong>Description:</strong> ${description}</p>
-      <button onclick="editTask(this)" type="button" class="btn">Edit</button>
-      <button onclick="deleteTask(this)" type="button" class="btn">Delete</button>
-    </div>
-  `;
-});
+  let filteredTasks = taskData;
+
+  if (currentFilter === "completed") {
+    filteredTasks = taskData.filter(task => task.completed);
+  }
+
+  if (currentFilter === "pending") {
+    filteredTasks = taskData.filter(task => !task.completed);
+  }
+
+  filteredTasks.forEach(({ id, title, date, description, completed }) => {
+    tasksContainer.innerHTML += `
+      <div class="task ${completed ? "completed" : ""}" id="${id}">
+        <input 
+          type="checkbox"
+          ${completed ? "checked" : ""}
+          onchange="toggleComplete(this)"
+        />
+        <p><strong>Title:</strong> ${title}</p>
+        <p><strong>Date:</strong> ${date}</p>
+        <p><strong>Description:</strong> ${description}</p>
+        <button onclick="editTask(this)" type="button" class="btn">Edit</button>
+        <button onclick="deleteTask(this)" type="button" class="btn">Delete</button>
+      </div>
+    `;
+  });
 };
 
 
@@ -144,4 +155,19 @@ taskForm.addEventListener("submit", (e) => {
   e.preventDefault();
 
   addOrUpdateTask();
+});
+
+document.getElementById("filter-all").addEventListener("click", () => {
+  currentFilter = "all";
+  updateTaskContainer();
+});
+
+document.getElementById("filter-completed").addEventListener("click", () => {
+  currentFilter = "completed";
+  updateTaskContainer();
+});
+
+document.getElementById("filter-pending").addEventListener("click", () => {
+  currentFilter = "pending";
+  updateTaskContainer();
 });
