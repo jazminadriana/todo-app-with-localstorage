@@ -18,16 +18,22 @@ const removeSpecialChars = (val) => {
 }
 
 const addOrUpdateTask = () => {
-   if(!titleInput.value.trim()){
+  if (!titleInput.value.trim()) {
     alert("Please provide a title");
     return;
   }
+
+  const dataArrIndex = taskData.findIndex(
+    (item) => item.id === currentTask.id
+  );
+
   const taskObj = {
-  id: `${removeSpecialChars(titleInput.value).toLowerCase().split(" ").join("-")}-${Date.now()}`,
-  title: titleInput.value,
-  date: dateInput.value,
-  description: descriptionInput.value,
-};
+    id: currentTask.id || `${titleInput.value.toLowerCase().split(" ").join("-")}-${Date.now()}`,
+    title: titleInput.value,
+    date: dateInput.value,
+    description: descriptionInput.value,
+    completed: currentTask.completed || false
+  };
 
   if (dataArrIndex === -1) {
     taskData.unshift(taskObj);
@@ -36,26 +42,29 @@ const addOrUpdateTask = () => {
   }
 
   localStorage.setItem("data", JSON.stringify(taskData));
-  updateTaskContainer()
-  reset()
+  updateTaskContainer();
+  reset();
 };
 
 const updateTaskContainer = () => {
   tasksContainer.innerHTML = "";
 
-  taskData.forEach(
-    ({ id, title, date, description }) => {
-        (tasksContainer.innerHTML += `
-        <div class="task" id="${id}">
-          <p><strong>Title:</strong> ${title}</p>
-          <p><strong>Date:</strong> ${date}</p>
-          <p><strong>Description:</strong> ${description}</p>
-          <button onclick="editTask(this)" type="button" class="btn">Edit</button>
-          <button onclick="deleteTask(this)" type="button" class="btn">Delete</button> 
-        </div>
-      `)
-    }
-  );
+taskData.forEach(({ id, title, date, description, completed }) => {
+  tasksContainer.innerHTML += `
+    <div class="task ${completed ? "completed" : ""}" id="${id}">
+      <input 
+        type="checkbox"
+        ${completed ? "checked" : ""}
+        onchange="toggleComplete(this)"
+      />
+      <p><strong>Title:</strong> ${title}</p>
+      <p><strong>Date:</strong> ${date}</p>
+      <p><strong>Description:</strong> ${description}</p>
+      <button onclick="editTask(this)" type="button" class="btn">Edit</button>
+      <button onclick="deleteTask(this)" type="button" class="btn">Delete</button>
+    </div>
+  `;
+});
 };
 
 
@@ -68,6 +77,17 @@ const deleteTask = (buttonEl) => {
   taskData.splice(dataArrIndex, 1);
   localStorage.setItem("data", JSON.stringify(taskData));
 }
+
+const toggleComplete = (checkboxEl) => {
+  const dataArrIndex = taskData.findIndex(
+    (item) => item.id === checkboxEl.parentElement.id
+  );
+
+  taskData[dataArrIndex].completed = checkboxEl.checked;
+
+  localStorage.setItem("data", JSON.stringify(taskData));
+  updateTaskContainer();
+};
 
 const editTask = (buttonEl) => {
     const dataArrIndex = taskData.findIndex(
