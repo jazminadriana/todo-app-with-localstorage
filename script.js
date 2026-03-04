@@ -1,5 +1,9 @@
 document.addEventListener("DOMContentLoaded", () => {
 
+  /* =========================
+     ELEMENTS
+  ========================= */
+
   const taskForm = document.getElementById("task-form");
   const openBtn = document.getElementById("open-task-form-btn");
   const closeBtn = document.getElementById("close-task-form-btn");
@@ -15,12 +19,24 @@ document.addEventListener("DOMContentLoaded", () => {
   const filterCompletedBtn = document.getElementById("filter-completed-btn");
   const filterPendingBtn = document.getElementById("filter-pending-btn");
 
+  /* =========================
+     STATE
+  ========================= */
+
   let tasks = JSON.parse(localStorage.getItem("data")) || [];
   let currentFilter = "all";
+
+  /* =========================
+     STORAGE
+  ========================= */
 
   const save = () => {
     localStorage.setItem("data", JSON.stringify(tasks));
   };
+
+  /* =========================
+     COUNTER
+  ========================= */
 
   const updateCounter = () => {
     const total = tasks.length;
@@ -35,6 +51,10 @@ document.addEventListener("DOMContentLoaded", () => {
     taskCounter.innerText =
       `${total} total • ${completed} completed • ${pending} pending`;
   };
+
+  /* =========================
+     RENDER
+  ========================= */
 
   const render = () => {
     tasksContainer.innerHTML = "";
@@ -79,17 +99,27 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCounter();
   };
 
+  /* =========================
+     FILTER UI
+  ========================= */
+
   const setActiveFilter = (btn) => {
     document.querySelectorAll(".controls button")
       .forEach(b => b.classList.remove("active"));
     btn.classList.add("active");
   };
 
+  /* =========================
+     ADD TASK
+  ========================= */
+
   taskForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
+    if (!titleInput.value.trim()) return;
+
     const newTask = {
-      id: Date.now(),
+      id: Date.now().toString(), // ✅ string ID
       title: titleInput.value,
       date: dateInput.value,
       description: descriptionInput.value,
@@ -97,6 +127,7 @@ document.addEventListener("DOMContentLoaded", () => {
     };
 
     tasks.unshift(newTask);
+
     save();
     render();
 
@@ -104,38 +135,55 @@ document.addEventListener("DOMContentLoaded", () => {
     overlay.classList.add("hidden");
   });
 
-  tasksContainer.addEventListener("click", (e) => {
+  /* =========================
+     CLICK EVENTS (DELETE / EDIT)
+  ========================= */
+
+ tasksContainer.addEventListener("change", (e) => {
+  if (e.target.type === "checkbox") {
+
     const taskEl = e.target.closest(".task");
     if (!taskEl) return;
 
-    const id = Number(taskEl.dataset.id);
+    const id = taskEl.dataset.id;
     const task = tasks.find(t => t.id === id);
 
-    if (e.target.classList.contains("delete-btn")) {
-      tasks = tasks.filter(t => t.id !== id);
-    }
+    if (!task) return;
 
-    if (e.target.classList.contains("edit-btn")) {
-      titleInput.value = task.title;
-      dateInput.value = task.date;
-      descriptionInput.value = task.description;
-      tasks = tasks.filter(t => t.id !== id);
-      overlay.classList.remove("hidden");
-    }
+    task.completed = e.target.checked;
+
+    // 🔥 Actualizamos solo la UI necesaria
+    taskEl.classList.toggle("completed", task.completed);
 
     save();
-    render();
-  });
+  }
+});
+
+  /* =========================
+     CHECKBOX TOGGLE
+  ========================= */
 
   tasksContainer.addEventListener("change", (e) => {
     if (e.target.type === "checkbox") {
-      const id = Number(e.target.closest(".task").dataset.id);
+
+      const taskEl = e.target.closest(".task");
+      if (!taskEl) return;
+
+      const id = taskEl.dataset.id;
       const task = tasks.find(t => t.id === id);
+
+      if (!task) return; // defensive check
+
       task.completed = e.target.checked;
+
       save();
       render();
     }
   });
+
+  /* =========================
+     FILTER BUTTONS
+  ========================= */
 
   filterAllBtn.addEventListener("click", () => {
     currentFilter = "all";
@@ -155,6 +203,10 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
+  /* =========================
+     MODAL
+  ========================= */
+
   openBtn.addEventListener("click", () => {
     overlay.classList.remove("hidden");
   });
@@ -162,6 +214,10 @@ document.addEventListener("DOMContentLoaded", () => {
   closeBtn.addEventListener("click", () => {
     overlay.classList.add("hidden");
   });
+
+  /* =========================
+     INITIAL LOAD
+  ========================= */
 
   render();
 });
