@@ -1,34 +1,35 @@
-# Todo App
+# Todo App with LocalStorage
 
-A simple task management application built with vanilla JavaScript, HTML, and CSS.
+A fully functional CRUD task management application built with vanilla JavaScript, focusing on state management, DOM manipulation, and persistent client-side storage.
 
 ## Live Demo
 
-You can view the project here:
-
 https://jazminadriana.github.io/todo-app-with-localstorage/
 
-## Overview
+---
 
-This project allows users to:
+## Project Overview
 
-- Create tasks
-- Edit tasks
-- Delete tasks
-- Mark tasks as completed
-- Filter tasks (All, Completed, Pending)
-- Persist data using localStorage
+This application allows users to create, edit, delete, complete, and filter tasks dynamically.  
+All data is persisted using the LocalStorage API, ensuring tasks remain available after page reload.
 
-The goal of this project was to strengthen core frontend fundamentals without using any frameworks.
+The project was built without frameworks to reinforce core frontend fundamentals and deepen understanding of how state and UI synchronization work under the hood.
 
-## Features
+---
 
-- Modal-based task creation
-- Dynamic task filtering
-- Task counter
-- Persistent storage using localStorage
+## Core Features
+
+- Dynamic task creation, editing, and deletion
+- Task completion toggle with real-time UI updates
+- Filtering by status (All / Completed / Pending)
+- Persistent storage using LocalStorage
+- Event delegation for efficient event handling
+- Modal-based task form
+- Task counter with dynamic updates
 - Responsive layout
-- Basic UI animations
+- Subtle UI animations
+
+---
 
 ## Tech Stack
 
@@ -37,18 +38,23 @@ The goal of this project was to strengthen core frontend fundamentals without us
 - JavaScript (ES6+)
 - LocalStorage API
 
-## What I Practiced
+---
 
-- DOM manipulation
-- Event delegation
-- State management
-- Conditional rendering
-- Synchronizing UI with stored data
+## Technical Concepts Applied
+
+- State management in small-scale applications
+- Event delegation pattern
+- DOM traversal and dynamic rendering
+- Conditional rendering logic
+- Synchronization between UI and persistent storage
+- Defensive programming practices
 - Code organization and separation of concerns
 
-## Installation
+---
 
-Clone the repository and open `index.html` in your browser:
+## How to Run Locally
+
+Clone the repository:
 
 ```bash
-git clone https://jazminadriana.github.io/todo-app-with-localstorage/
+git clone https://github.com/jazminadriana/todo-app-with-localstorage.git
