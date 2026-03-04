@@ -1,173 +1,167 @@
-const taskForm = document.getElementById("task-form");
-const confirmCloseDialog = document.getElementById("confirm-close-dialog");
-const openTaskFormBtn = document.getElementById("open-task-form-btn");
-const closeTaskFormBtn = document.getElementById("close-task-form-btn");
-const addOrUpdateTaskBtn = document.getElementById("add-or-update-task-btn");
-const cancelBtn = document.getElementById("cancel-btn");
-const discardBtn = document.getElementById("discard-btn");
-const tasksContainer = document.getElementById("tasks-container");
-const titleInput = document.getElementById("title-input");
-const dateInput = document.getElementById("date-input");
-const descriptionInput = document.getElementById("description-input");
-let currentFilter = "all";
+document.addEventListener("DOMContentLoaded", () => {
 
-const taskData = JSON.parse(localStorage.getItem("data")) || [];
-let currentTask = {};
+  const taskForm = document.getElementById("task-form");
+  const openBtn = document.getElementById("open-task-form-btn");
+  const closeBtn = document.getElementById("close-task-form-btn");
+  const overlay = document.getElementById("form-overlay");
+  const tasksContainer = document.getElementById("tasks-container");
+  const taskCounter = document.getElementById("task-counter");
 
-const removeSpecialChars = (val) => {
-  return val.trim().replace(/[^A-Za-z0-9\-\s]/g, '')
-}
+  const titleInput = document.getElementById("title-input");
+  const dateInput = document.getElementById("date-input");
+  const descriptionInput = document.getElementById("description-input");
 
-const addOrUpdateTask = () => {
-  if (!titleInput.value.trim()) {
-    alert("Please provide a title");
-    return;
-  }
+  const filterAllBtn = document.getElementById("filter-all-btn");
+  const filterCompletedBtn = document.getElementById("filter-completed-btn");
+  const filterPendingBtn = document.getElementById("filter-pending-btn");
 
-  const dataArrIndex = taskData.findIndex(
-    (item) => item.id === currentTask.id
-  );
+  let tasks = JSON.parse(localStorage.getItem("data")) || [];
+  let currentFilter = "all";
 
-  const taskObj = {
-    id: currentTask.id || `${titleInput.value.toLowerCase().split(" ").join("-")}-${Date.now()}`,
-    title: titleInput.value,
-    date: dateInput.value,
-    description: descriptionInput.value,
-    completed: currentTask.completed || false
+  const save = () => {
+    localStorage.setItem("data", JSON.stringify(tasks));
   };
 
-  if (dataArrIndex === -1) {
-    taskData.unshift(taskObj);
-  } else {
-    taskData[dataArrIndex] = taskObj;
-  }
+  const updateCounter = () => {
+    const total = tasks.length;
+    const completed = tasks.filter(t => t.completed).length;
+    const pending = total - completed;
 
-  localStorage.setItem("data", JSON.stringify(taskData));
-  updateTaskContainer();
-  reset();
-};
+    if (!total) {
+      taskCounter.innerText = "";
+      return;
+    }
 
-const updateTaskContainer = () => {
-  tasksContainer.innerHTML = "";
+    taskCounter.innerText =
+      `${total} total • ${completed} completed • ${pending} pending`;
+  };
 
-  let filteredTasks = taskData;
+  const render = () => {
+    tasksContainer.innerHTML = "";
 
-  if (currentFilter === "completed") {
-    filteredTasks = taskData.filter(task => task.completed);
-  }
+    let filtered = tasks;
 
-  if (currentFilter === "pending") {
-    filteredTasks = taskData.filter(task => !task.completed);
-  }
+    if (currentFilter === "completed") {
+      filtered = tasks.filter(t => t.completed);
+    }
 
-  filteredTasks.forEach(({ id, title, date, description, completed }) => {
-    tasksContainer.innerHTML += `
-      <div class="task ${completed ? "completed" : ""}" id="${id}">
-        <input 
-          type="checkbox"
-          ${completed ? "checked" : ""}
-          onchange="toggleComplete(this)"
-        />
-        <p><strong>Title:</strong> ${title}</p>
-        <p><strong>Date:</strong> ${date}</p>
-        <p><strong>Description:</strong> ${description}</p>
-        <button onclick="editTask(this)" type="button" class="btn">Edit</button>
-        <button onclick="deleteTask(this)" type="button" class="btn">Delete</button>
-      </div>
-    `;
+    if (currentFilter === "pending") {
+      filtered = tasks.filter(t => !t.completed);
+    }
+
+    if (!filtered.length) {
+      tasksContainer.innerHTML = `
+        <div class="empty-state">
+          <h3>No tasks found</h3>
+        </div>
+      `;
+      updateCounter();
+      return;
+    }
+
+    filtered.forEach(task => {
+      const div = document.createElement("div");
+      div.className = `task ${task.completed ? "completed" : ""}`;
+      div.dataset.id = task.id;
+
+      div.innerHTML = `
+        <input type="checkbox" ${task.completed ? "checked" : ""}/>
+        <p><strong>${task.title}</strong></p>
+        <p>${task.date || ""}</p>
+        <p>${task.description || ""}</p>
+        <button class="edit-btn">Edit</button>
+        <button class="delete-btn">Delete</button>
+      `;
+
+      tasksContainer.appendChild(div);
+    });
+
+    updateCounter();
+  };
+
+  const setActiveFilter = (btn) => {
+    document.querySelectorAll(".controls button")
+      .forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  };
+
+  taskForm.addEventListener("submit", (e) => {
+    e.preventDefault();
+
+    const newTask = {
+      id: Date.now(),
+      title: titleInput.value,
+      date: dateInput.value,
+      description: descriptionInput.value,
+      completed: false
+    };
+
+    tasks.unshift(newTask);
+    save();
+    render();
+
+    taskForm.reset();
+    overlay.classList.add("hidden");
   });
-};
 
+  tasksContainer.addEventListener("click", (e) => {
+    const taskEl = e.target.closest(".task");
+    if (!taskEl) return;
 
-const deleteTask = (buttonEl) => {
-  const dataArrIndex = taskData.findIndex(
-    (item) => item.id === buttonEl.parentElement.id
-  );
+    const id = Number(taskEl.dataset.id);
+    const task = tasks.find(t => t.id === id);
 
-  buttonEl.parentElement.remove();
-  taskData.splice(dataArrIndex, 1);
-  localStorage.setItem("data", JSON.stringify(taskData));
-}
+    if (e.target.classList.contains("delete-btn")) {
+      tasks = tasks.filter(t => t.id !== id);
+    }
 
-const toggleComplete = (checkboxEl) => {
-  const dataArrIndex = taskData.findIndex(
-    (item) => item.id === checkboxEl.parentElement.id
-  );
+    if (e.target.classList.contains("edit-btn")) {
+      titleInput.value = task.title;
+      dateInput.value = task.date;
+      descriptionInput.value = task.description;
+      tasks = tasks.filter(t => t.id !== id);
+      overlay.classList.remove("hidden");
+    }
 
-  taskData[dataArrIndex].completed = checkboxEl.checked;
+    save();
+    render();
+  });
 
-  localStorage.setItem("data", JSON.stringify(taskData));
-  updateTaskContainer();
-};
+  tasksContainer.addEventListener("change", (e) => {
+    if (e.target.type === "checkbox") {
+      const id = Number(e.target.closest(".task").dataset.id);
+      const task = tasks.find(t => t.id === id);
+      task.completed = e.target.checked;
+      save();
+      render();
+    }
+  });
 
-const editTask = (buttonEl) => {
-    const dataArrIndex = taskData.findIndex(
-    (item) => item.id === buttonEl.parentElement.id
-  );
+  filterAllBtn.addEventListener("click", () => {
+    currentFilter = "all";
+    setActiveFilter(filterAllBtn);
+    render();
+  });
 
-  currentTask = taskData[dataArrIndex];
+  filterCompletedBtn.addEventListener("click", () => {
+    currentFilter = "completed";
+    setActiveFilter(filterCompletedBtn);
+    render();
+  });
 
-  titleInput.value = currentTask.title;
-  dateInput.value = currentTask.date;
-  descriptionInput.value = currentTask.description;
+  filterPendingBtn.addEventListener("click", () => {
+    currentFilter = "pending";
+    setActiveFilter(filterPendingBtn);
+    render();
+  });
 
-  addOrUpdateTaskBtn.innerText = "Update Task";
+  openBtn.addEventListener("click", () => {
+    overlay.classList.remove("hidden");
+  });
 
-  taskForm.classList.toggle("hidden");  
-}
+  closeBtn.addEventListener("click", () => {
+    overlay.classList.add("hidden");
+  });
 
-const reset = () => {
-  addOrUpdateTaskBtn.innerText = "Add Task";
-  titleInput.value = "";
-  dateInput.value = "";
-  descriptionInput.value = "";
-  taskForm.classList.toggle("hidden");
-  currentTask = {};
-}
-
-if (taskData.length) {
-  updateTaskContainer();
-}
-
-openTaskFormBtn.addEventListener("click", () =>
-  taskForm.classList.toggle("hidden")
-);
-
-closeTaskFormBtn.addEventListener("click", () => {
-  const formInputsContainValues = titleInput.value || dateInput.value || descriptionInput.value;
-  const formInputValuesUpdated = titleInput.value !== currentTask.title || dateInput.value !== currentTask.date || descriptionInput.value !== currentTask.description;
-
-  if (formInputsContainValues && formInputValuesUpdated) {
-    confirmCloseDialog.showModal();
-  } else {
-    reset();
-  }
-});
-
-cancelBtn.addEventListener("click", () => confirmCloseDialog.close());
-
-discardBtn.addEventListener("click", () => {
-  confirmCloseDialog.close();
-  reset()
-});
-
-taskForm.addEventListener("submit", (e) => {
-  e.preventDefault();
-
-  addOrUpdateTask();
-});
-
-document.getElementById("filter-all").addEventListener("click", () => {
-  currentFilter = "all";
-  updateTaskContainer();
-});
-
-document.getElementById("filter-completed").addEventListener("click", () => {
-  currentFilter = "completed";
-  updateTaskContainer();
-});
-
-document.getElementById("filter-pending").addEventListener("click", () => {
-  currentFilter = "pending";
-  updateTaskContainer();
+  render();
 });
