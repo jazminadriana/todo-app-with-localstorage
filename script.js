@@ -1,12 +1,8 @@
 document.addEventListener("DOMContentLoaded", () => {
 
-  /* =========================
-     ELEMENTS
-  ========================= */
-
   const taskForm = document.getElementById("task-form");
   const openBtn = document.getElementById("open-task-form-btn");
-  const closeBtn = document.getElementById("close-task-form-btn");
+  const cancelBtn = document.getElementById("cancel-btn");
   const overlay = document.getElementById("form-overlay");
   const tasksContainer = document.getElementById("tasks-container");
   const taskCounter = document.getElementById("task-counter");
@@ -19,24 +15,16 @@ document.addEventListener("DOMContentLoaded", () => {
   const filterCompletedBtn = document.getElementById("filter-completed-btn");
   const filterPendingBtn = document.getElementById("filter-pending-btn");
 
-  /* =========================
-     STATE
-  ========================= */
+  const formTitle = document.getElementById("form-title");
+  const submitBtn = document.getElementById("submit-btn");
 
   let tasks = JSON.parse(localStorage.getItem("data")) || [];
   let currentFilter = "all";
-
-  /* =========================
-     STORAGE
-  ========================= */
+  let editingTaskId = null; // 🔥 clave para editar correctamente
 
   const save = () => {
     localStorage.setItem("data", JSON.stringify(tasks));
   };
-
-  /* =========================
-     COUNTER
-  ========================= */
 
   const updateCounter = () => {
     const total = tasks.length;
@@ -52,11 +40,8 @@ document.addEventListener("DOMContentLoaded", () => {
       `${total} total • ${completed} completed • ${pending} pending`;
   };
 
-  /* =========================
-     RENDER
-  ========================= */
-
   const render = () => {
+
     tasksContainer.innerHTML = "";
 
     let filtered = tasks;
@@ -85,7 +70,7 @@ document.addEventListener("DOMContentLoaded", () => {
       div.dataset.id = task.id;
 
       div.innerHTML = `
-        <input type="checkbox" ${task.completed ? "checked" : ""}/>
+        <input type="checkbox" class="task-checkbox" ${task.completed ? "checked" : ""}>
         <p><strong>${task.title}</strong></p>
         <p>${task.date || ""}</p>
         <p>${task.description || ""}</p>
@@ -99,91 +84,86 @@ document.addEventListener("DOMContentLoaded", () => {
     updateCounter();
   };
 
-  /* =========================
-     FILTER UI
-  ========================= */
-
-  const setActiveFilter = (btn) => {
-    document.querySelectorAll(".controls button")
-      .forEach(b => b.classList.remove("active"));
-    btn.classList.add("active");
-  };
-
-  /* =========================
-     ADD TASK
-  ========================= */
+  /* ================= ADD / UPDATE ================= */
 
   taskForm.addEventListener("submit", (e) => {
     e.preventDefault();
 
     if (!titleInput.value.trim()) return;
 
-    const newTask = {
-      id: Date.now().toString(), // ✅ string ID
-      title: titleInput.value,
-      date: dateInput.value,
-      description: descriptionInput.value,
-      completed: false
-    };
-
-    tasks.unshift(newTask);
+    if (editingTaskId) {
+      // 🔥 UPDATE
+      const task = tasks.find(t => t.id === editingTaskId);
+      task.title = titleInput.value;
+      task.date = dateInput.value;
+      task.description = descriptionInput.value;
+    } else {
+      // 🔥 ADD
+      const newTask = {
+        id: Date.now().toString(),
+        title: titleInput.value,
+        date: dateInput.value,
+        description: descriptionInput.value,
+        completed: false
+      };
+      tasks.unshift(newTask);
+    }
 
     save();
     render();
-
-    taskForm.reset();
-    overlay.classList.add("hidden");
+    resetForm();
   });
 
-  /* =========================
-     CLICK EVENTS (DELETE / EDIT)
-  ========================= */
+  /* ================= DELETE / EDIT ================= */
 
- tasksContainer.addEventListener("change", (e) => {
-  if (e.target.type === "checkbox") {
+  tasksContainer.addEventListener("click", (e) => {
 
     const taskEl = e.target.closest(".task");
     if (!taskEl) return;
 
     const id = taskEl.dataset.id;
-    const task = tasks.find(t => t.id === id);
 
-    if (!task) return;
-
-    task.completed = e.target.checked;
-
-    // 🔥 Actualizamos solo la UI necesaria
-    taskEl.classList.toggle("completed", task.completed);
-
-    save();
-  }
-});
-
-  /* =========================
-     CHECKBOX TOGGLE
-  ========================= */
-
-  tasksContainer.addEventListener("change", (e) => {
-    if (e.target.type === "checkbox") {
-
-      const taskEl = e.target.closest(".task");
-      if (!taskEl) return;
-
-      const id = taskEl.dataset.id;
-      const task = tasks.find(t => t.id === id);
-
-      if (!task) return; // defensive check
-
-      task.completed = e.target.checked;
-
+    if (e.target.classList.contains("delete-btn")) {
+      tasks = tasks.filter(t => t.id !== id);
       save();
       render();
     }
+
+    if (e.target.classList.contains("edit-btn")) {
+      const task = tasks.find(t => t.id === id);
+
+      titleInput.value = task.title;
+      dateInput.value = task.date;
+      descriptionInput.value = task.description;
+
+      editingTaskId = id; // 🔥 guardamos ID
+
+      formTitle.innerText = "Update Task";
+      submitBtn.innerText = "Update";
+
+      overlay.classList.remove("hidden");
+    }
   });
 
-  /* =========================
-     FILTER BUTTONS
-  ========================= */
+  /* ================= CHECKBOX ================= */
+
+  tasksContainer.addEventListener("change", (e) => {
+
+    if (!e.target.classList.contains("task-checkbox")) return;
+
+    const id = e.target.closest(".task").dataset.id;
+    const task = tasks.find(t => t.id === id);
+
+    task.completed = e.target.checked;
+
+    e.target.closest(".task")
+      .classList.toggle("completed", task.completed);
+
+    save();
+    updateCounter();
+  });
+
+  /* ================= FILTERS ================= */
 
   filterAllBtn.addEventListener("click", () => {
     currentFilter = "all";
@@ -203,21 +183,29 @@ document.addEventListener("DOMContentLoaded", () => {
     render();
   });
 
-  /* =========================
-     MODAL
-  ========================= */
+  const setActiveFilter = (btn) => {
+    document.querySelectorAll(".controls button")
+      .forEach(b => b.classList.remove("active"));
+    btn.classList.add("active");
+  };
+
+  /* ================= MODAL ================= */
 
   openBtn.addEventListener("click", () => {
     overlay.classList.remove("hidden");
   });
 
-  closeBtn.addEventListener("click", () => {
-    overlay.classList.add("hidden");
+  cancelBtn.addEventListener("click", () => {
+    resetForm();
   });
 
-  /* =========================
-     INITIAL LOAD
-  ========================= */
+  function resetForm() {
+    taskForm.reset();
+    editingTaskId = null;
+    formTitle.innerText = "Add Task";
+    submitBtn.innerText = "Add Task";
+    overlay.classList.add("hidden");
+  }
 
   render();
 });

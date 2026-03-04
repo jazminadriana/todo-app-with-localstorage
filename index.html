@@ -1,52 +1,43 @@
-  <!DOCTYPE html>
-  <html lang="en">
-  <head>
-    <meta charset="UTF-8">
-    <title>Todo App</title>
-    <link rel="stylesheet" href="styles.css">
-  </head>
-  <body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Todo App</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
 
-    <h1>Todo App</h1>
+  <h1>Todo App</h1>
 
-    <div class="controls">
-      <button id="open-task-form-btn">Add Task</button>
-      <button id="filter-all-btn">All</button>
-      <button id="filter-completed-btn">Completed</button>
-      <button id="filter-pending-btn">Pending</button>
+  <div class="controls">
+    <button id="open-task-form-btn">Add Task</button>
+    <button id="filter-all-btn" class="active">All</button>
+    <button id="filter-completed-btn">Completed</button>
+    <button id="filter-pending-btn">Pending</button>
+  </div>
+
+  <p id="task-counter"></p>
+
+  <div id="tasks-container" class="tasks-container"></div>
+
+  <!-- MODAL -->
+  <div id="form-overlay" class="overlay hidden">
+    <div class="form-wrapper">
+      <form id="task-form">
+        <h2 id="form-title">Add Task</h2>
+
+        <input id="title-input" type="text" placeholder="Title" required />
+        <input id="date-input" type="date" />
+        <textarea id="description-input" placeholder="Description"></textarea>
+
+        <div class="form-buttons">
+          <button type="submit" id="submit-btn">Add Task</button>
+          <button type="button" id="cancel-btn">Cancel</button>
+        </div>
+      </form>
     </div>
+  </div>
 
-    <p id="task-counter"></p>
-
-    <div id="tasks-container" class="tasks-container"></div>
-
-    <!-- MODAL -->
-    <div id="form-overlay" class="overlay hidden">
-      <div class="form-wrapper">
-        <form id="task-form">
-          <h2>Task</h2>
-
-          <input id="title-input" type="text" placeholder="Title" required />
-          <input id="date-input" type="date" />
-          <textarea id="description-input" placeholder="Description"></textarea>
-
-          <div class="form-buttons">
-            <button type="submit" id="add-or-update-task-btn">Add Task</button>
-            <button type="button" id="close-task-form-btn">Close</button>
-          </div>
-        </form>
-      </div>
-    </div>
-
-    <!-- CONFIRM DIALOG -->
-    <dialog id="confirm-close-dialog">
-      <p>You have unsaved changes. Discard them?</p>
-      <div class="dialog-buttons">
-        <button id="cancel-btn">Cancel</button>
-        <button id="discard-btn">Discard</button>
-      </div>
-    </dialog>
-
-    <script src="script.js"></script>
-  </body>
-  </html>
+  <script src="script.js"></script>
+</body>
+</html>
